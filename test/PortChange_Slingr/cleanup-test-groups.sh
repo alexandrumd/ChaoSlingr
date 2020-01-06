@@ -1,5 +1,7 @@
 #!/bin/bash
-TERRAFORM_VERSION="0.9.4"
+TERRAFORM_VERSION="0.11.3"
+echo "Initializing terraform"
+terraform init
 docker run --rm -v $(pwd):/data --workdir=/data hashicorp/terraform:$TERRAFORM_VERSION plan -destroy
 if [ $? -ne 0 ]; then
   exit 1
