@@ -3,3 +3,6 @@ terraform.tfstate
 terraform.tfstate.backup
 .DS_Store
 *.out
+venv*
+.terraform
+tfplan
