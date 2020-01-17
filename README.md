@@ -1,3 +1,41 @@
+# Update for this Fork of the project
+As I gave ChaosSlingr a try it wasn't straightforward from the beginning what AWS resources are needed to run the tests.
+
+So to make things easier, the lambdas creation, corresponding role, policy, CloudWatcg log group and event rule are all created automatically with Terraform. These resources are located in the new folder `test/lambdas_terraform`.
+
+## How to Run
+- `cd` in the project folder and create the python virtual environment:
+  - `pip3 install --upgrade pip; pip install --upgrade pip`
+  - `python3 -m venv venv3`
+  - `source venv3/bin/activate`
+  - and install python requirements `pip3 install -r requirements.txt`
+- `cd test/lambdas_terraform` to spin up the AWS Lambdas and linked resources with Terraform. Check this [README](test/lambdas_terraform/README.md) for details on this step.
+  - The three Lambdas will be created, along with a [role and policy](https://github.com/alexandrumd/ChaoSlingr/blob/a7d6182d566e5e14b98684c77c8a5540d0799738/test/lambdas_terraform/lambda_slingr.tf#L6-L81), to be used in common. Check the .tf files for details.
+  - A CloudWatch Log Group (`/aws/lambda/PortChange_Slingr`) is used in common by the Lambdas.
+  - A CloudWatch [event rule](https://github.com/alexandrumd/ChaoSlingr/blob/a7d6182d566e5e14b98684c77c8a5540d0799738/test/lambdas_terraform/lambda_trackr.tf#L15) is used to trigger the `PortChange_Slack_Trackr` Lambda function in case of changes to Security Groups.
+- Go to `test/PortChange_Generatr` folder and `./run-test.sh`
+  - This will create 3 Security Groups with different opt-in tags for testing: one with the `OptMeInTest` tag set to `true`, another with the tag set to `false` and last one not having this tag.
+  - It will then invoke the `PortChange_Generatr` Lambda, supplying the `OptMeInTest` tag as parameter.
+  - The function will iterate security groups and select those having this tag and its value set to `true`.
+  - It will then [invoke](https://github.com/alexandrumd/ChaoSlingr/blob/a7d6182d566e5e14b98684c77c8a5540d0799738/src/lambda/PortChange_Generatr.py#L92) the `PortChange_Slingr` Lambda, that will "sling" the group - open up random ports.
+  - These events will also trigger the `PortChange_Slack_Trackr_rule` CloudWatch event rule, that will trigger in its turn the `PortChange_Slack_Trackr` Lambda function, that will finally [push the notification to the configured Slack Incoming WebHooks](https://github.com/alexandrumd/ChaoSlingr/blob/a7d6182d566e5e14b98684c77c8a5540d0799738/test/lambdas_terraform/lambda_trackr.tf#L59-L64).
+  - Finally, the Security Groups will be destroyed.
+
+### Cleanup
+To remove the Lambdas and corresponding resources, `cd test/lambdas_terraform` and run `terraform destroy`.
+
+# Changes compared to original
+- Updated python requirements - awscli==1.16.308 and boto3==1.10.44
+- Updated terraform version to 0.11.3
+- Add `test/lambdas_terraform` to automatically build the needed resources with Terraform
+
+
+---
+
+Original README follows.
+
+---
+
 ![FileImage](./docs/Files.png)
 
 Thanks for your interest in Optum’s ChaoSlingr project!  Unfortunately, we have moved on and this project is no longer actively maintained or monitored by our Open Source Program Office.  This copy is provided for reference only.  Please fork the code if you are interested in further development.  The project and all artifacts including code and documentation remain subject to use and reference under the terms and conditions of the open source license indicated.  All copyrights reserved.
